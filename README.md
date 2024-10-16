@@ -51,8 +51,9 @@ This project implements a simple DNS-based service discovery mechanism using Go 
     PROXMOX_URL=https://your-proxmox-api-url
     PVE_API_TOKEN=your-proxmox-api-token
     DNS_SUFFIX=.example.com
-    DNS_LISTEN_PORT=53 #use 2053 for local testing
-    DNS_REFRESH_SECONDS=60
+    DNS_LISTEN_PORT=53 # use 2053 for local testing
+    DNS_REFRESH_SECONDS=60 # how ofter go to proxmox api
+    USE_PROXMOX_TAGS=True # if true proxmox-service-discovery records will be filled also with tags
     ```
 
 5. Build and run the Go application:

@@ -79,7 +79,8 @@ func updateRecordsFromProxmox() {
 	// Reading environment variables
 	proxmoxURL := os.Getenv("PROXMOX_URL")
 	apiToken := os.Getenv("PVE_API_TOKEN")
-	dnsSuffix := os.Getenv("DNS_SUFFIX") // Reading the DNS suffix
+	dnsSuffix := os.Getenv("DNS_SUFFIX")            // Reading the DNS suffix
+	useProxmoxTags := os.Getenv("USE_PROXMOX_TAGS") // Reading whether to use Proxmox tags
 
 	// Checking for the presence of environment variables
 	if proxmoxURL == "" || apiToken == "" {
@@ -125,8 +126,8 @@ func updateRecordsFromProxmox() {
 					newRecords[configResp.Data.Name+dnsSuffix] = ip
 				}
 
-				// Split tags by semicolons and create DNS records based on tags
-				if vm.Tags != "" {
+				// Check if tags should be used to create DNS records
+				if useProxmoxTags == "true" && vm.Tags != "" {
 					tags := strings.Split(vm.Tags, ";")
 					for _, tag := range tags {
 						tag = strings.TrimSpace(tag) // Trim any extra spaces
