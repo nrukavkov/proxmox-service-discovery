@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,7 +49,7 @@ type ProxmoxVMsResponse struct {
 // Resty client for HTTP requests
 var client = resty.New()
 
-// DNS A-records will be updated every 60 seconds
+// DNS A-records will be updated every refresh interval
 var records = map[string]string{}
 
 // Generic function for Proxmox API requests
@@ -215,19 +216,30 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Periodically update records every 1 minute
+	// Read DNS_LISTEN_PORT and DNS_REFRESH_SECONDS from environment
+	port := os.Getenv("DNS_LISTEN_PORT")
+	if port == "" {
+		port = "2053" // Default port
+	}
+	refreshSecondsStr := os.Getenv("DNS_REFRESH_SECONDS")
+	refreshSeconds, err := strconv.Atoi(refreshSecondsStr)
+	if err != nil || refreshSeconds <= 0 {
+		refreshSeconds = 60 // Default to 60 seconds
+	}
+
+	// Periodically update records based on refresh interval
 	go func() {
 		for {
 			updateRecordsFromProxmox()
-			time.Sleep(60 * time.Second) // 1 minute
+			time.Sleep(time.Duration(refreshSeconds) * time.Second)
 		}
 	}()
 
 	dns.HandleFunc(".", handleDNSRequest)
 
-	server := &dns.Server{Addr: ":2053", Net: "udp"}
+	server := &dns.Server{Addr: ":" + port, Net: "udp"}
 
-	log.Printf("Starting DNS server on port 2053...")
+	log.Printf("Starting DNS server on port %s...", port)
 	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Failed to start DNS server: %v", err)
