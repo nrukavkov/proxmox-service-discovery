@@ -84,7 +84,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 
 	// Fetching all nodes
 	var nodesResp ProxmoxNodesResponse
-	err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes", apiToken, &nodesResp)
+	err := fetchFromProxmox(fmt.Sprintf("%s/api2/json/nodes", proxmoxURL), apiToken, &nodesResp)
 	if err != nil {
 		log.Printf("Error fetching node list: %v. Skipping update.", err)
 		return // Do not update records if an error occurs
@@ -93,7 +93,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 	// For each node, fetch VMs, their configuration, and network information
 	for _, node := range nodesResp.Data {
 		var vmsResp ProxmoxVMsResponse
-		err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu", apiToken, &vmsResp)
+		err := fetchFromProxmox(fmt.Sprintf("%s/api2/json/nodes/%s/qemu", proxmoxURL, node.Node), apiToken, &vmsResp)
 		if err != nil {
 			log.Printf("Error fetching VMs for node %s: %v. Skipping this node.", node.Node, err)
 			continue // Skip this node and move to the next one
@@ -102,7 +102,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 		// For each VM, fetch configuration and extract IP address and name
 		for _, vm := range vmsResp.Data {
 			var configResp VMConfigResponse
-			err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu/"+fmt.Sprint(vm.VMID)+"/config", apiToken, &configResp)
+			err := fetchFromProxmox(fmt.Sprintf("%s/api2/json/nodes/%s/qemu/%d/config", proxmoxURL, node.Node, vm.VMID), apiToken, &configResp)
 			if err != nil {
 				log.Printf("Error fetching configuration for VM %d on node %s: %v. Skipping this VM.", vm.VMID, node.Node, err)
 				continue // Skip this VM and move to the next one
@@ -132,7 +132,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 
 		// Fetch network information for the node
 		var nodeNetworkResp NodeNetworkResponse
-		err = fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/network", apiToken, &nodeNetworkResp)
+		err = fetchFromProxmox(fmt.Sprintf("%s/api2/json/nodes/%s/network", proxmoxURL, node.Node), apiToken, &nodeNetworkResp)
 		if err != nil {
 			log.Printf("Error fetching network information for node %s: %v. Skipping network records for this node.", node.Node, err)
 			continue
@@ -141,6 +141,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 		// Add network information for interface vmbr0
 		for _, iface := range nodeNetworkResp.Data {
 			if iface.Iface == "vmbr0" && iface.Address != "" {
+				// Add node's vmbr0 interface without adding 'vmbr0' to the DNS name
 				newRecords[node.Node+dnsSuffix] = iface.Address
 				break
 			}
