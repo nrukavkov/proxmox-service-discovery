@@ -31,6 +31,18 @@ type VMConfig struct {
 	Name      string `json:"name"`      // Name of the VM
 }
 
+// Structure for network interface data of the node
+type NetworkInterface struct {
+	Iface    string   `json:"iface"`
+	Address  string   `json:"address"`
+	Type     string   `json:"type"`
+	Families []string `json:"families"`
+}
+
+type NodeNetworkResponse struct {
+	Data []NetworkInterface `json:"data"`
+}
+
 // Example structure for the Proxmox API response
 type ProxmoxNodesResponse struct {
 	Data []Node `json:"data"`
@@ -65,7 +77,7 @@ func fetchFromProxmox(url, apiToken string, result interface{}) error {
 	return nil
 }
 
-// Function to get and update DNS records from Proxmox
+// Function to get and update DNS records from Proxmox, including VMs and node network data
 func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, dnsSuffix, useProxmoxTags string) {
 	// Temporary variable to hold the new records
 	newRecords := map[string]string{}
@@ -78,7 +90,7 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 		return // Do not update records if an error occurs
 	}
 
-	// For each node, fetch VMs and their configuration
+	// For each node, fetch VMs, their configuration, and network information
 	for _, node := range nodesResp.Data {
 		var vmsResp ProxmoxVMsResponse
 		err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu", apiToken, &vmsResp)
@@ -115,6 +127,22 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 						}
 					}
 				}
+			}
+		}
+
+		// Fetch network information for the node
+		var nodeNetworkResp NodeNetworkResponse
+		err = fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/network", apiToken, &nodeNetworkResp)
+		if err != nil {
+			log.Printf("Error fetching network information for node %s: %v. Skipping network records for this node.", node.Node, err)
+			continue
+		}
+
+		// Add network information for interface vmbr0
+		for _, iface := range nodeNetworkResp.Data {
+			if iface.Iface == "vmbr0" && iface.Address != "" {
+				newRecords[node.Node+dnsSuffix] = iface.Address
+				break
 			}
 		}
 	}
