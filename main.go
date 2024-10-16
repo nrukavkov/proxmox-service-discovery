@@ -28,11 +28,12 @@ type VM struct {
 
 // Structure for the Proxmox API response for VM configuration (contains nested "data" field)
 type VMConfigResponse struct {
-	Data VMConfig `json:"data"` // Nested object containing ipconfig0
+	Data VMConfig `json:"data"` // Nested object containing ipconfig0 and name
 }
 
 type VMConfig struct {
-	IPConfig0 string `json:"ipconfig0"` // We're only interested in the IP configuration
+	IPConfig0 string `json:"ipconfig0"` // IP configuration
+	Name      string `json:"name"`      // Name of the VM
 }
 
 // Example structure for the Proxmox API response
@@ -102,7 +103,7 @@ func updateRecordsFromProxmox() {
 			continue
 		}
 
-		// For each VM, fetch configuration and extract IP address
+		// For each VM, fetch configuration and extract IP address and name
 		for _, vm := range vmsResp.Data {
 			var configResp VMConfigResponse
 			err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu/"+fmt.Sprint(vm.VMID)+"/config", apiToken, &configResp)
@@ -112,15 +113,22 @@ func updateRecordsFromProxmox() {
 			}
 
 			ip := extractIPFromConfig(configResp.Data.IPConfig0)
-			if ip != "" && vm.Tags != "" {
-				// Split tags by semicolons
-				tags := strings.Split(vm.Tags, ";")
-				for _, tag := range tags {
-					tag = strings.TrimSpace(tag) // Trim any extra spaces
-					tag = sanitizeTag(tag)       // Additional tag sanitization
-					if tag != "" {
-						// Create a record based on the tag and IP address
-						newRecords[tag+"."] = ip
+			if ip != "" {
+				// Create DNS records based on the VM name
+				if configResp.Data.Name != "" {
+					newRecords[configResp.Data.Name+"."] = ip
+				}
+
+				// Split tags by semicolons and create DNS records based on tags
+				if vm.Tags != "" {
+					tags := strings.Split(vm.Tags, ";")
+					for _, tag := range tags {
+						tag = strings.TrimSpace(tag) // Trim any extra spaces
+						tag = sanitizeTag(tag)       // Additional tag sanitization
+						if tag != "" {
+							// Create a record based on the tag and IP address
+							newRecords[tag+"."] = ip
+						}
 					}
 				}
 			}
@@ -202,11 +210,11 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Periodically update records every 5 minutes
+	// Periodically update records every 1 minute
 	go func() {
 		for {
 			updateRecordsFromProxmox()
-			time.Sleep(60 * time.Second) // 5 minutes
+			time.Sleep(60 * time.Second) // 1 minute
 		}
 	}()
 
