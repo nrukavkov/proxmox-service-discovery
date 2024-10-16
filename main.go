@@ -91,23 +91,24 @@ func updateRecordsFromProxmox() {
 		log.Fatal("Environment variable DNS_SUFFIX is not set")
 	}
 
+	// Temporary variable to hold the new records
+	newRecords := map[string]string{}
+
 	// Fetching all nodes
 	var nodesResp ProxmoxNodesResponse
 	err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes", apiToken, &nodesResp)
 	if err != nil {
-		log.Fatalf("Error fetching node list: %v", err)
+		log.Printf("Error fetching node list: %v. Skipping update.", err)
+		return // Do not update records if an error occurs
 	}
-
-	// Updating records
-	newRecords := map[string]string{}
 
 	// For each node, fetch VMs and their configuration
 	for _, node := range nodesResp.Data {
 		var vmsResp ProxmoxVMsResponse
 		err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu", apiToken, &vmsResp)
 		if err != nil {
-			log.Printf("Error fetching VMs for node %s: %v", node.Node, err)
-			continue
+			log.Printf("Error fetching VMs for node %s: %v. Skipping this node.", node.Node, err)
+			continue // Skip this node and move to the next one
 		}
 
 		// For each VM, fetch configuration and extract IP address and name
@@ -115,8 +116,8 @@ func updateRecordsFromProxmox() {
 			var configResp VMConfigResponse
 			err := fetchFromProxmox(proxmoxURL+"/api2/json/nodes/"+node.Node+"/qemu/"+fmt.Sprint(vm.VMID)+"/config", apiToken, &configResp)
 			if err != nil {
-				log.Printf("Error fetching configuration for VM %d on node %s: %v", vm.VMID, node.Node, err)
-				continue
+				log.Printf("Error fetching configuration for VM %d on node %s: %v. Skipping this VM.", vm.VMID, node.Node, err)
+				continue // Skip this VM and move to the next one
 			}
 
 			ip := extractIPFromConfig(configResp.Data.IPConfig0)
@@ -142,9 +143,9 @@ func updateRecordsFromProxmox() {
 		}
 	}
 
-	// Update global records
+	// Update global records only if there were no errors
 	records = newRecords
-	log.Printf("Updated records: %v", records)
+	log.Printf("Successfully updated records: %v", records)
 }
 
 // Function to extract IP address from the ipconfig0 string
