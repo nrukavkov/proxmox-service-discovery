@@ -70,7 +70,7 @@ func main() {
 	proxmoxURL := os.Getenv("PROXMOX_URL")
 	apiToken := os.Getenv("PVE_API_TOKEN")
 	dnsSuffix := os.Getenv("DNS_SUFFIX")
-	useProxmoxTags := os.Getenv("USE_PROXMOX_TAGS")
+	useProxmoxTags := os.Getenv("DISCOVERY_VM_TAGS")
 	discoveryCIDR := os.Getenv("DISCOVERY_NODE_CIDR")
 	port := os.Getenv("DNS_LISTEN_PORT")
 	if port == "" {
