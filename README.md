@@ -16,10 +16,10 @@ This project implements a DNS-based service discovery mechanism using Go for Pro
 
 1. The service queries the Proxmox API to fetch a list of VMs for each node.
 2. For each VM, the service retrieves the VM's configuration, including:
-   - IP address (`ipconfig0`).
-   - VM name (`name`).
-   - VM tags (`tags`), which are separated by semicolons.
-3. The service creates DNS `A` records for each VM based on its name and tags, appending a configurable DNS suffix to each record.
+   - Node name and IP Address (`DISCOVERY_NODE_CIDR`)
+   - VM name (`name`) and IP address (`ipconfig0`)
+   - VM tags (`tags`), which are separated by semicolons. (`DISCOVERY_VM_TAGS`)
+3. The service creates DNS `A` records for each Node in Cluster and VM based on its name and tags, appending a configurable DNS suffix to each record.
 4. These records are updated in memory every 60 seconds to reflect changes in the Proxmox environment.
 5. The service runs a DNS server on port `2053` that resolves DNS queries based on the stored records.
 
