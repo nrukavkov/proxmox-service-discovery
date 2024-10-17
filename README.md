@@ -30,6 +30,18 @@ This project implements a DNS-based service discovery mechanism using Go for Pro
 
 ## Installation
 
+You can use the way you want to start service. For example, using systemd
+
+1. Download last release version from github
+2. Copy `proxmox-service-discovery.service.example` to `/etc/systemd/system/proxmox-service-discovery.service` and change values
+3. Copy `.env.example` file `/path/to/your/dns-service-discovery/.env` and fill values.
+4. `sudo systemctl daemon-reload`
+5. `sudo systemctl enable proxmox-service-discovery`
+6. `sudo systemctl start proxmox-service-discovery`
+7. `sudo systemctl status proxmox-service-discovery`
+
+## Development
+
 1. Clone the repository:
 
     ```sh
