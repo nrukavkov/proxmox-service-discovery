@@ -1,6 +1,8 @@
-# Simple DNS-Based Proxmox Service Discovery
+# Proxmox Service Discovery
 
-This project implements a simple DNS-based service discovery mechanism using Go for Proxmox Cluster. The service retrieves virtual machine (VM) information from a Proxmox API and automatically generates DNS `A` records based on VM names and tags. These records are updated periodically and can be used to discover services in a dynamic environment.
+This project implements a DNS-based service discovery mechanism using Go for Proxmox Cluster. The service retrieves virtual machine (VM) information from a Proxmox API and automatically generates DNS `A` records based on VM names and tags. These records are updated periodically and can be used to discover services in a dynamic environment.
+
+<img src="scheme.excalidraw.png" width="300">
 
 ## Features
 
@@ -50,7 +52,7 @@ This project implements a simple DNS-based service discovery mechanism using Go 
     ```
     PROXMOX_URL=https://your-proxmox-api-url
     PVE_API_TOKEN=your-proxmox-api-token
-    DNS_SUFFIX=.example.com
+    DNS_SUFFIX=.proxmox.example.com
     DNS_LISTEN_PORT=53 # use 2053 for local testing
     DNS_REFRESH_SECONDS=60 # how ofter go to proxmox api
     DISCOVERY_VM_TAGS=true # if true proxmox-service-discovery records will be filled also with tags
@@ -69,14 +71,7 @@ The DNS server will start on port 2053 and will update DNS records every minute.
 To test the DNS queries, you can use dig or any other DNS client:
 
     ```bash
-    dig @localhost -p 2053 vm-name.example.com
-    ```
-
-Change DNS Port
-The DNS server listens on port 2053 by default. You can change this by modifying the Addr field in the DNS server configuration:
-
-    ```go
-    server := &dns.Server{Addr: ":2053", Net: "udp"}
+    dig @localhost -p 2053 vm01.proxmox.example.com
     ```
 
 ## License
