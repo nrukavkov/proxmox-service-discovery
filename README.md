@@ -32,18 +32,18 @@ This project implements a DNS-based service discovery mechanism using Go for Pro
 
 1. Clone the repository:
 
-    ```bash
+    ```sh
     git clone https://github.com/nrukavkov/proxmox-service-discovery.git
     cd proxmox-service-discovery
     ```
 2. Install dependencies:
 
-    ```bash
+    ```sh
     go mod tidy
     ```
 3. Create a .env file to configure the service:
 
-    ```bash
+    ```sh
     touch .env
     ```
 
@@ -61,7 +61,7 @@ This project implements a DNS-based service discovery mechanism using Go for Pro
 
 5. Build and run the Go application:
 
-    ```bash
+    ```sh
     go build -o proxmox-service-discovery
     ./proxmox-service-discovery
     ```
@@ -70,7 +70,7 @@ The DNS server will start on port 2053 and will update DNS records every minute.
 
 To test the DNS queries, you can use dig or any other DNS client:
 
-    ```bash
+    ```sh
     dig @localhost -p 2053 vm01.proxmox.example.com
     ```
 
