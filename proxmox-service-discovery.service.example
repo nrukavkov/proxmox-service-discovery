@@ -1,0 +1,13 @@
+[Unit]
+Description=Proxmox DNS Service Discovery
+After=network.target
+
+[Service]
+User=youruser
+WorkingDirectory=/path/to/your/dns-service-discovery
+ExecStart=/path/to/your/dns-service-discovery/dns-service-discovery-linux
+Restart=always
+EnvironmentFile=/etc/default/proxmox-service-discovery
+
+[Install]
+WantedBy=multi-user.target
