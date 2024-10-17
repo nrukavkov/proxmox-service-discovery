@@ -6,6 +6,22 @@ on:
       - main
 
 jobs:
+  version:
+    outputs:
+      app_version: ${{ steps.version.outputs.new_tag }}
+      changelog: ${{ steps.version.outputs.changelog }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump version and push tag
+        id: version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     runs-on: ubuntu-latest
 
@@ -41,7 +57,9 @@ jobs:
         path: ./proxmox-service-discovery-linux-${{ matrix.goarch }}.zip
 
   release:
-    needs: build
+    needs: 
+      - version
+      - build
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -56,26 +74,16 @@ jobs:
       with:
         name: proxmox-service-discovery-linux-arm64.zip
 
-    - name: Bump version and create tag
-      id: tag_version
-      uses: mathieudutour/github-tag-action@v6.2
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        tag_prefix: "v"
-        release_branches: "main"
-        default_bump: "patch"
-        create_annotated_tag: true
-
     - name: Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: ncipollo/release-action@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.tag_version.outputs.new_tag }}
-        release_name: "Release ${{ steps.tag_version.outputs.new_tag }}"
-        draft: false
-        prerelease: false
+        tag: ${{ needs.version.outputs.app_version }}
+        name: Release ${{ needs.version.outputs.app_version }}
+        body: ${{ needs.version.outputs.changelog }}
+        generateReleaseNotes: true
 
     - name: Upload Linux AMD64 ZIP artifact
       uses: actions/upload-release-asset@v1
