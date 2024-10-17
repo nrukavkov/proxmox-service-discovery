@@ -54,6 +54,7 @@ This project implements a simple DNS-based service discovery mechanism using Go 
     DNS_LISTEN_PORT=53 # use 2053 for local testing
     DNS_REFRESH_SECONDS=60 # how ofter go to proxmox api
     USE_PROXMOX_TAGS=true # if true proxmox-service-discovery records will be filled also with tags
+    DISCOVERY_NODE_CIDR=192.168.0.0/24
     ```
 
 5. Build and run the Go application:

@@ -71,6 +71,7 @@ func main() {
 	apiToken := os.Getenv("PVE_API_TOKEN")
 	dnsSuffix := os.Getenv("DNS_SUFFIX")
 	useProxmoxTags := os.Getenv("USE_PROXMOX_TAGS")
+	discoveryCIDR := os.Getenv("DISCOVERY_NODE_CIDR")
 	port := os.Getenv("DNS_LISTEN_PORT")
 	if port == "" {
 		port = "2053" // Default port
@@ -84,7 +85,7 @@ func main() {
 	// Periodically update records based on refresh interval
 	go func() {
 		for {
-			updateRecordsFromProxmox(records, proxmoxURL, apiToken, dnsSuffix, useProxmoxTags)
+			updateRecordsFromProxmox(records, proxmoxURL, apiToken, dnsSuffix, useProxmoxTags, discoveryCIDR)
 			time.Sleep(time.Duration(refreshSeconds) * time.Second)
 		}
 	}()

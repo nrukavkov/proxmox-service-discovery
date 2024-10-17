@@ -35,6 +35,7 @@ type VMConfig struct {
 type NetworkInterface struct {
 	Iface    string   `json:"iface"`
 	Address  string   `json:"address"`
+	CIDR     string   `json:"cidr"`
 	Type     string   `json:"type"`
 	Families []string `json:"families"`
 }
@@ -78,7 +79,7 @@ func fetchFromProxmox(url, apiToken string, result interface{}) error {
 }
 
 // Function to get and update DNS records from Proxmox, including VMs and node network data
-func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, dnsSuffix, useProxmoxTags string) {
+func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, dnsSuffix, useProxmoxTags, discoveryCIDR string) {
 	// Temporary variable to hold the new records
 	newRecords := map[string]string{}
 
@@ -138,12 +139,14 @@ func updateRecordsFromProxmox(records map[string]string, proxmoxURL, apiToken, d
 			continue
 		}
 
-		// Add network information for interface vmbr0
-		for _, iface := range nodeNetworkResp.Data {
-			if iface.Iface == "vmbr0" && iface.Address != "" {
-				// Add node's vmbr0 interface without adding 'vmbr0' to the DNS name
-				newRecords[node.Node+dnsSuffix] = iface.Address
-				break
+		// Add network information for the interface that matches the DISCOVERY_NODE_CIDR
+		if discoveryCIDR != "" {
+			for _, iface := range nodeNetworkResp.Data {
+				if iface.CIDR == discoveryCIDR && iface.Address != "" {
+					// Add node's interface with matching CIDR to the DNS records
+					newRecords[node.Node+dnsSuffix] = iface.Address
+					break
+				}
 			}
 		}
 	}
